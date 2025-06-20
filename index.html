@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hambana Café Menu</title>
+
+    <!-- Inline tweaks for the logo → responsive & consistently small -->
+    <style>
+      /* Keeps the logo from dominating the header on any screen size */
+      .logo-img {
+        width: 5cm;        /* Base size on small screens */
+        max-width: 30vw;     /* Never wider than 30% of viewport width */
+        height: auto;        /* Preserve aspect‑ratio */
+        object-fit: contain; /* Scale nicely if you swap images of different proportions */
+        border-radius: 20%;
+      }
+
+      /* A tad larger on tablets/desktop so it doesn’t look too tiny */
+      @media (min-width: 768px) {
+        .logo-img {
+          width: 160px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="menu-box">
+      <header>
+        <!-- Language‑specific logo -->
+        <img id="logoImg" class="logo-img" alt="Hambana Logo" />
+
+        <!-- "Menu" / "القائمة" / "لیست" -->
+        <h3 id="tagline" class="tagline"></h3>
+
+        <!-- Language switcher -->
+        <select id="langSelect" title="Choose language"></select>
+      </header>
+
+      <div id="filterButtons"></div>
+      <div id="menuContainer"></div>
+
+      <footer>
+        <small id="footerName"></small>
+      </footer>
+
+      <!-- Template for a single menu line -->
+      <template id="itemTpl">
+        <div class="menu-item">
+          <div class="item-name"></div>
+          <div class="price"></div>
+        </div>
+      </template>
+    </div>
+
+    <!-- ►► Inline JavaScript ◄◄ -->
+    <script>
+      (function () {
+        /* ========= Images for each language ========= */
+        const languageImages = {
+          en: "Backen.png",   // English
+          ar: "Backar.png",   // Arabic
+          ku: "Back.png",      // Kurdish
+        };
+
+        /* ========= Data ========= */
+        const defaultItems = [
+          { id: 1, cat: "coffee", names: { en: "Espresso", ar: "إسبريسو", ku: "ئیسپرێسو" }, price: 2000 },
+          { id: 2, cat: "coffee", names: { en: "Arabica coffee", ar: "قهوة عربية", ku: "قاوەی عەرەبی" }, price: 1500 },
+          { id: 3, cat: "coffee", names: { en: "Kurdish coffee", ar: "القهوة قزوان", ku: "قاوەی قەزوان" }, price: 1500 },
+          { id: 4, cat: "coffee", names: { en: "Americano", ar: "أمريكانو", ku: "ئەمریکانۆ" }, price: 3000 },
+          { id: 5, cat: "coffee", names: { en: "Mocha", ar: "موكا", ku: "مۆکا" }, price: 3500 },
+          { id: 6, cat: "coffee", names: { en: "Latte macchiato", ar: "لاتيه ماكياتو", ku: "لاتێ ماکیتۆ" }, price: 3500 },
+          { id: 7, cat: "coffee", names: { en: "Cappuccino", ar: "كابتشينو", ku: "کاپوچینۆ" }, price: 3000 },
+          { id: 8, cat: "coffee", names: { en: "Flat white", ar: "فلات وايت", ku: "فلات وايت" }, price: 2500 },
+          { id: 9, cat: "coffee", names: { en: "Nescafé", ar: "نسكافيه", ku: "نسكافە" }, price: 2000 },
+          { id: 10, cat: "coffee", names: { en: "Hot Chocolate", ar: "شوكولاتة ساخنة", ku: "شوکلاتەی گەرم" }, price: 2500 },
+          { id: 11, cat: "coffee", names: { en: "Milk", ar: "حليب", ku: "شیر" }, price: 1000 },
+          { id: 12, cat: "coffee", names: { en: "Honey & Milk", ar: "حليب والعسل", ku: "شیر و هەنگوین" }, price: 2000 },
+          { id: 13, cat: "icedcoffee", names: { en: "Iced coffee", ar: "كوفی المثلج", ku: "ئایس کۆفی" }, price: 3500 },
+          { id: 14, cat: "icedcoffee", names: { en: "Iced latte", ar: "لاتيه المثلج", ku: "ئایس لاتێ" }, price: 3500 },
+          { id: 15, cat: "icedcoffee", names: { en: "Iced americano", ar: "أمريكانو المثلج", ku: "ئایس ئەمریکانۆ" }, price: 3000 },
+          { id: 16, cat: "icedcoffee", names: { en: "Frappe", ar: "فرابي", ku: "فراپێ" }, price: 4000 },
+          { id: 17, cat: "icedcoffee", names: { en: "Iced mocha", ar: "موكا المثلج", ku: "ئایس مۆکا" }, price: 3500 },
+          { id: 18, cat: "icedcoffee", names: { en: "Iced cappuccino", ar: "كابتشينو المثلج", ku: "ئایس کاپوچینۆ" }, price: 3500 },
+          { id: 19, cat: "icedcoffee", names: { en: "Iced caramel macchiato", ar: "كراميل ماكياتو المثلج", ku: "ئایس کارامێڵی" }, price: 4000 },
+          { id: 20, cat: "icedcoffee", names: { en: "Iced Flat white", ar: "فلات وايت المثلج", ku: "ئایس فلات وايت" }, price: 3000 },
+          { id: 21, cat: "tea", names: { en: "Tea", ar: "شاي", ku: "چا" }, price: 500 },
+          { id: 22, cat: "tea", names: { en: "Green tea", ar: "شاي أخضر", ku: "چای سەوز" }, price: 500 },
+          { id: 23, cat: "tea", names: { en: "Milk & tea", ar: "شاي بحليب", ku: "شیرو چا" }, price: 1000 },
+          { id: 24, cat: "tea", names: { en: "Lemon tea", ar: "شاي بالليمون", ku: "چای لیمۆ" }, price: 500 },
+          { id: 25, cat: "tea", names: { en: "Ginger tea", ar: "شاي الزنجبيل", ku: "چای زەنجەبیل" }, price: 500 },
+          { id: 26, cat: "tea", names: { en: "Baibun tea", ar: "شاي بابونج", ku: "چای گوڵەبەیبون" }, price: 500 },
+          { id: 27, cat: "tea", names: { en: "Mint herbal tea", ar: "شاي النعناع", ku: "چای نەعنا" }, price: 500 },
+          { id: 28, cat: "tea", names: { en: "Pomegranate tea", ar: "شاي رومان", ku: "چای هەنار" }, price: 500 },
+          { id: 29, cat: "tea", names: { en: "Matcha tea", ar: "شاي ماتشا", ku: "چای ماچا" }, price: 500 },
+          { id: 30, cat: "drinks", names: { en: "Water", ar: "ماء", ku: "ئاو" }, price: 250 },
+          { id: 31, cat: "drinks", names: { en: "Cola", ar: "كولا", ku: "کۆلا" }, price: 500 },
+          { id: 32, cat: "drinks", names: { en: "Dew", ar: "دیو", ku: "دیو" }, price: 500 },
+          { id: 33, cat: "drinks", names: { en: "Pepsi", ar: "بيبسي", ku: "پێپسی" }, price: 500 },
+          { id: 34, cat: "drinks", names: { en: "Mission", ar: "مشن", ku: "مشن" }, price: 750 },
+          { id: 35, cat: "drinks", names: { en: "Tiger", ar: "تايجر", ku: "تايگەر" }, price: 1000 },
+          { id: 36, cat: "drinks", names: { en: "Vinut", ar: "فینوت", ku: "ڤینۆت" }, price: 1000 },
+          { id: 37, cat: "drinks", names: { en: "Istak", ar: "إيستك", ku: "ئێستەک" }, price: 1000 },
+          { id: 38, cat: "drinks", names: { en: "Freez", ar: "فریز", ku: "فریز" }, price: 1500 },
+          { id: 39, cat: "drinks", names: { en: "Lemonat", ar: "ليمونات", ku: "لیمۆنات" }, price: 750 },
+          { id: 40, cat: "drinks", names: { en: "Ayran", ar: "عيران", ku: "دۆ" }, price: 1000 },
+          { id: 41, cat: "freshjuice", names: { en: "Orange", ar: "برتقال", ku: "پرتەقاڵ" }, price: 2000 },
+          { id: 42, cat: "freshjuice", names: { en: "Banana milk", ar: "حليب بنكهة الموز", ku: "شیر مۆز" }, price: 2000 },
+          { id: 43, cat: "freshjuice", names: { en: "Orange Lemonade", ar: "ليمون برتقال", ku: "لیمۆ و پرتەقاڵ" }, price: 2000 },
+          { id: 44, cat: "freshjuice", names: { en: "Maxiki", ar: "مكسيكي", ku: "مەکسیکی" }, price: 2500 },
+          { id: 45, cat: "freshjuice", names: { en: "Mojito", ar: "موخیتو", ku: "مۆهیتۆ" }, price: 2500 },
+          { id: 46, cat: "freshjuice", names: { en: "Hambana special", ar: "هامبانا خاص", ku: "تایبەت بە هەمبانە" }, price: 3000 },
+          { id: 47, cat: "desserts", names: { en: "Muhalabi", ar: "محلبی", ku: "محەلەبی" }, price: 1000 },
+          { id: 48, cat: "desserts", names: { en: "Mix muhalabi", ar: "محلبی مزج", ku: "محەلەبی تێکەڵە" }, price: 1500 },
+          { id: 49, cat: "desserts", names: { en: "Turta", ar: "تورت", ku: "تورتە" }, price: 1500 },
+          { id: 50, cat: "desserts", names: { en: "Khsh khsh", ar: "خش خش", ku: "خش خش" }, price: 1500 },
+          { id: 51, cat: "snacks", names: { en: "Falafel", ar: "فلافل", ku: "فەلافل" }, price: 1000 },
+          { id: 52, cat: "snacks", names: { en: "Foga", ar: "دلیمیة", ku: "فۆگە" }, price: 2000 },
+          { id: 53, cat: "snacks", names: { en: "Rice and broth", ar: "تمن و مرک", ku: "برنج و شلەی سادە" }, price: 2500 },
+          { id: 54, cat: "snacks", names: { en: "Chicken and rice", ar: "تمن و دجاج", ku: "برنج و مریشک" }, price: 4000 },
+          { id: 55, cat: "snacks", names: { en: "Shifta", ar: "شفتة", ku: "شفتە" }, price: 1500 },
+          { id: 56, cat: "snacks", names: { en: "Fish", ar: "سمك", ku: "ماسی" }, price: 3500 },
+          { id: 57, cat: "snacks", names: { en: "Chickpea", ar: "حمص", ku: "نۆکاو" }, price: 1500 },
+          { id: 58, cat: "snacks", names: { en: "scrambled egg and tomato", ar: "مخلمة بالبيض", ku: "مەخلەمە بەهێلکە" }, price: 2500 },
+          { id: 59, cat: "snacks", names: { en: "scrambled egg and meat", ar: " مخلمة باللحم", ku: "مەخلەمە بە گۆشت" }, price: 4000 },
+        ];
+
+        /* ========= Translations ========= */
+        const languages = {
+          en: {
+            tagline: "Menu",
+            all: "All",
+            sections: {
+              coffee: "☕ Coffee",
+              icedcoffee: "🧊 Iced Coffee",
+              tea: "🍵 Tea",
+              drinks: "🥤 Drinks",
+              freshjuice: "🍹 Fresh Juice",
+              desserts: "🍰 Desserts",
+              snacks: "🥪 Meal",
+            },
+          },
+          ar: {
+            tagline: "القائمة",
+            all: "الكل",
+            sections: {
+              coffee: "☕ قهوة",
+              icedcoffee: "🧊 قهوة مثلجة",
+              tea: "🍵 شاي",
+              freshjuice: "🍹 عصير طازج",
+              drinks: "🥤 مشروبات",
+              snacks: "🥪 وجبات",
+              desserts: "🍰 حلويات",
+            },
+          },
+          ku: {
+            tagline: "لیست",
+            all: "هەموو",
+            sections: {
+              coffee: "☕ قاوە",
+              icedcoffee: "🧊 قاوەی ساردەکان",
+              tea: "🍵 چای",
+              freshjuice: "🍹شەربەتی فرێش",
+              drinks: "🥤 خواردنەوەکان",
+              snacks: "🥪 خواردن",
+              desserts: "🍰 شیرینی",
+            },
+          },
+        };
+
+        /* ========= State ========= */
+        let currentLang = localStorage.getItem("lang") || "en";
+        let currentFilter = "all";
+
+        /* ========= DOM ========= */
+        const langSelect = document.getElementById("langSelect");
+        const menuContainer = document.getElementById("menuContainer");
+        const itemTpl = document.getElementById("itemTpl");
+        const filterButtons = document.getElementById("filterButtons");
+        const taglineEl = document.getElementById("tagline");
+        const logoImg = document.getElementById("logoImg");
+
+        /* ========= Helpers ========= */
+        const categories = ["all", "coffee", "icedcoffee", "tea", "drinks", "freshjuice", "desserts", "snacks"];
+        const loadItems = () => defaultItems;
+        const t = (path) => path.split(".").reduce((o, k) => o && o[k], languages[currentLang]) || path;
+
+        /* ========= Renderers ========= */
+        function renderFilterButtons() {
+          filterButtons.innerHTML = "";
+          categories.forEach((cat) => {
+            const btn = document.createElement("button");
+            btn.dataset.cat = cat;
+            btn.textContent = cat === "all" ? t("all") : t(`sections.${cat}`);
+            if (cat === currentFilter) btn.classList.add("active");
+            filterButtons.appendChild(btn);
+          });
+        }
+
+        function renderMenu() {
+          menuContainer.innerHTML = "";
+          const items = loadItems();
+          const cats = categories.slice(1);
+          const show = currentFilter === "all" ? cats : [currentFilter];
+
+          show.forEach((cat) => {
+            const sec = document.createElement("section");
+            sec.className = "menu-section";
+            const h2 = document.createElement("h2");
+            h2.textContent = t(`sections.${cat}`);
+            sec.appendChild(h2);
+
+            items
+              .filter((i) => i.cat === cat)
+              .forEach((i) => {
+                const node = itemTpl.content.cloneNode(true);
+                const displayName = (i.names && i.names[currentLang]) || (i.names && i.names.en) || "Unnamed";
+                const container = node.querySelector(".menu-item");
+
+                container.querySelector(".item-name").textContent = displayName;
+                container.querySelector(".price").textContent = `IQD ${Math.round(i.price)}`;
+
+                sec.appendChild(container);
+              });
+
+            menuContainer.appendChild(sec);
+          });
+        }
+
+        function renderUIStrings() {
+          taglineEl.textContent = t("tagline");
+          logoImg.src = languageImages[currentLang] || "Back.png";
+          document.getElementById("footerName").textContent = "";
+        }
+
+        function updateDirection() {
+          const rtl = currentLang === "ar" || currentLang === "ku";
+          document.documentElement.dir = rtl ? "rtl" : "ltr";
+          filterButtons.style.direction = rtl ? "rtl" : "ltr";
+        }
+
+        /* ========= Event bindings ========= */
+        langSelect.onchange = () => {
+          currentLang = langSelect.value;
+          localStorage.setItem("lang", currentLang);
+          renderUIStrings();
+          renderFilterButtons();
+          renderMenu();
+          updateDirection();
+        };
+
+        filterButtons.onclick = (e) => {
+          if (e.target.tagName === "BUTTON") {
+            [...filterButtons.children].forEach((b) => b.classList.remove("active"));
+            e.target.classList.add("active");
+            currentFilter = e.target.dataset.cat;
+            renderMenu();
+          }
+        };
+
+        /* ========= Initial render ========= */
+        renderLangOptions();
+        renderUIStrings();
+        renderFilterButtons();
+        renderMenu();
+        updateDirection();
+
+        function renderLangOptions() {
+          langSelect.innerHTML = "";
+          Object.keys(languages).forEach((k) => {
+            const o = document.createElement("option");
+            o.value = k;
+            o.textContent = k.toUpperCase();
+            if (k === currentLang) o.selected = true;
+            langSelect.appendChild(o);
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
