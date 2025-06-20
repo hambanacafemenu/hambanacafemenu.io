@@ -265,9 +265,9 @@ footer {
 #langSelect {
   appearance: auto;
   margin-block: clamp(1rem, 4vw, 1.5rem) clamp(1.2rem, 5vw, 2.4rem);
-  min-height: 56px;
-  padding: .75rem 1.5rem;
-  font-size: clamp(1.05rem, 3.5vw, 1.25rem);
+  min-height: 45px; /* Reduced from 56px */
+  padding: 0.5rem 1rem; /* Slightly smaller padding */
+  font-size: clamp(0.95rem, 3vw, 1.1rem); /* Slightly smaller text */
   font-weight: 600;
   border: 2px solid var(--gold);
   border-radius: var(--radius-sm);
@@ -275,12 +275,17 @@ footer {
   transition: background 0.25s ease, border-color 0.25s ease;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
-#langSelect:hover { background: #fbf0d8; }
+
+#langSelect:hover {
+  background: #fbf0d8;
+}
+
 #langSelect:focus {
   outline: none;
   border-color: var(--gold-light);
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, .45);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.45);
 }
+
 
 /* =========================================
    LTR Font Tweaks
